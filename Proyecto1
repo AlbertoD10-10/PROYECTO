@@ -1,0 +1,100 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+#define BUFFER_SIZE 1024
+
+void handle_request(int client_sock) {
+    char buffer[BUFFER_SIZE];
+    ssize_t bytes_read;
+    bytes_read = recv(client_sock, buffer, BUFFER_SIZE, 0);
+    if (bytes_read < 0) {
+        perror("Error al recibir datos del cliente");
+        exit(EXIT_FAILURE);
+    }
+
+    // Analizar la solicitud HTTP
+    // Aquí puedes implementar la lógica para analizar los métodos GET, HEAD y POST
+
+    // Generar respuesta HTTP
+    // Aquí puedes implementar la lógica para generar respuestas HTTP con diferentes códigos de respuesta
+
+    // Enviar respuesta al cliente
+    ssize_t bytes_sent;
+    bytes_sent = send(client_sock, buffer, bytes_read, 0);
+    if (bytes_sent < 0) {
+        perror("Error al enviar datos al cliente");
+        exit(EXIT_FAILURE);
+    }
+
+    close(client_sock);
+}
+
+int main(int argc, char *argv[]) {
+    if (argc != 4) {
+        printf("Uso: %s <HTTP PORT> <Log File> <DocumentRootFolder>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    int port = atoi(argv[1]);
+    const char *log_file = argv[2];
+    const char *document_root = argv[3];
+
+    // Crear un socket
+    int server_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_sock < 0) {
+        perror("Error al crear socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // Configurar dirección del servidor
+    struct sockaddr_in server_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_addr.sin_port = htons(port);
+
+    // Vincular el socket a la dirección del servidor
+    if (bind(server_sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Error al vincular el socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // Escuchar conexiones entrantes
+    if (listen(server_sock, 10) < 0) {
+        perror("Error al escuchar conexiones");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Servidor web TWS ejecutándose en el puerto %d...\n", port);
+
+    while (1) {
+        // Aceptar una conexión entrante
+        struct sockaddr_in client_addr;
+        socklen_t client_addr_len = sizeof(client_addr);
+        int client_sock = accept(server_sock, (struct sockaddr *)&client_addr, &client_addr_len);
+        if (client_sock < 0) {
+            perror("Error al aceptar conexión");
+            exit(EXIT_FAILURE);
+        }
+
+        // Manejar la solicitud en un nuevo hilo
+        pid_t pid = fork();
+        if (pid < 0) {
+            perror("Error al crear hilo");
+            exit(EXIT_FAILURE);
+        } else if (pid == 0) {
+            // Hijo: manejar la solicitud
+            close(server_sock);
+            handle_request(client_sock);
+            exit(EXIT_SUCCESS);
+        } else {
+            // Padre: cerrar el socket del cliente y volver a escuchar
+            close(client_sock);
+        }
+    }
+
+    return 0;
+}
