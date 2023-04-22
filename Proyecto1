@@ -6,10 +6,10 @@
 
 #define BUFFER_SIZE 1024
 
-/*void getArr(char Buffer[]){
+void getArr(char Buffer[]){
 int x = 0;
 String NewArr;
-for(int i=0,i<=Buffer.size;i++){
+for(int i=0,i<=Buffer.size;i++);{
    if(Buffer[i]==""||Buffer[i]=="T"|| x = 1){
     x = 1;
     for(int O=i+1;O<=Buffer.size;O++){
@@ -17,13 +17,13 @@ for(int i=0,i<=Buffer.size;i++){
     }
    }
 }    
-} */
+} 
 
-/*void Search(String newArr){
+void Search(String newArr){
     // Necesitamos saber la ruta en donde Vlad tiene guardado esto en el pc
-}*/
+} 
 
-/*void Head(char Buffer[]){
+void Head(char Buffer[]){ 
 int x = 0;
 String NewArr1;
 for(int i=0,i<=Buffer.size;i++){
@@ -34,9 +34,9 @@ for(int i=0,i<=Buffer.size;i++){
     }
    }
 }    
-} */
+} 
 
-/*void Post(){
+void Post(){ 
 int x = 0;
 String NewArr2;
 for(int i=0,i<=Buffer.size;i++){
@@ -47,7 +47,7 @@ for(int i=0,i<=Buffer.size;i++){
     }
    }
 }
-} */
+} 
 
 
 
@@ -68,8 +68,14 @@ void handle_request(int client_sock) {
 
     // Enviar respuesta al cliente
     ssize_t bytes_sent;
-    buffer  = "HTTP/1.1 200 OK \r\n\r\n <html> <h1> Pagina de prueba</h1></html>";
-    bytes_sent = send(client_sock, buffer, bytes_read, 0);
+    if (/* error en la solicitud */) {
+        strcpy(buffer, "HTTP/1.1 400 Bad Request\r\n\r\n");
+    } else if (/* recurso no encontrado */) {
+        strcpy(buffer, "HTTP/1.1 404 Not Found\r\n\r\n");
+    } else {
+        strcpy(buffer, "HTTP/1.1 200 OK\r\n\r\n<html><h1>Pagina de prueba</h1></html>");
+    }
+    bytes_sent = send(client_sock, buffer, strlen(buffer), 0);
     if (bytes_sent < 0) {
         perror("Error al enviar datos al cliente");
         exit(EXIT_FAILURE);
